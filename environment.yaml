@@ -1,0 +1,12 @@
+name: eye
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip=23.1.2
+  - numpy=1.26.4
+  - pip:
+    - ursina==7.0.0
+    - mediapipe==0.10.21
+    - opencv-python==4.11.0.86
