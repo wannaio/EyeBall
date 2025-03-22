@@ -1,4 +1,4 @@
-from ursina import Entity, color
+from eye_tracking.eye_tracker import EyeTracker  # have to be imported before ursina...
 from ursina import Ursina, camera, time, held_keys, destroy, scene
 from player import Player
 from obstacle import spawn_obstacle_at
@@ -7,38 +7,64 @@ from ui import UIManager
 from utils import apply_gravity
 from game_env import GameEnv
 import random
+import argparse
 
-app = Ursina()
 
-# Game configuration
-lanes = [-2, 0, 2]
-base_speed = 5
-ball_radius = 0.25
-gravity = 9.8
+def init_game(eye_tracking):
+    # change to more OOD later lol... 
+    global app, lanes, base_speed, ball_radius, gravity, level_length, max_level, level_speed, obstacle_min_spacing
+    global game_active, score, obstacles, last_obstacle_z, lane_switch_cooldown, jumping, camera, game_env, player
+    global level_manager, ui_manager, eye_tracker, last_eye_direction, eye_command_processed
+    global use_eye_tracking, eye_tracking_available
+    
+    app = Ursina()
 
-# Level and obstacle settings
-level_length = 300
-max_level = 5
-level_speed = {1: 1.0, 2: 1.2, 3: 1.4, 4: 1.6, 5: 1.8}
-obstacle_min_spacing = 5
+    # Game configuration
+    lanes = [-2, 0, 2]
+    base_speed = 5
+    ball_radius = 0.25
+    gravity = 9.8
 
-# Global game state
-game_active = True
-score = 0
-obstacles = []
-last_obstacle_z = 0
-lane_switch_cooldown = 0
-jumping = False
+    # Level and obstacle settings
+    level_length = 300
+    max_level = 5
+    level_speed = {1: 1.0, 2: 1.2, 3: 1.4, 4: 1.6, 5: 1.8}
+    obstacle_min_spacing = 5
 
-# Cameras    
-camera.position = (0, 5, -10)
-camera.rotation_x = 20
+    # Global game state
+    game_active = True
+    score = 0
+    obstacles = []
+    last_obstacle_z = 0
+    lane_switch_cooldown = 0
+    jumping = False
 
-# Instantiate game env and managers
-game_env = GameEnv()
-player = Player(lanes)
-level_manager = LevelManager(level_length, max_level, level_speed)
-ui_manager = UIManager(camera.ui)
+    # Cameras    
+    camera.position = (0, 5, -10)
+    camera.rotation_x = 20
+
+    # Instantiate game env and managers
+    game_env = GameEnv()
+    player = Player(lanes)
+    level_manager = LevelManager(level_length, max_level, level_speed)
+    ui_manager = UIManager(camera.ui)
+
+    # Initialize eye tracker
+    use_eye_tracking = False
+    eye_tracking_available = eye_tracking  # toggle for eye tracking control
+    if eye_tracking_available:
+        try:
+            eye_tracker = EyeTracker()
+            eye_tracker.start()
+            use_eye_tracking = True
+            last_eye_direction = "center"
+            eye_command_processed = True
+
+        except Exception as e:
+            print(f"Error initializing EyeTracker: {e}")
+            eye_tracking_available = False
+    
+    return app
 
 
 def handle_jumping():
@@ -60,16 +86,41 @@ def handle_jumping():
 
 
 def handle_lane_movement():
-    global lane_switch_cooldown
-    if lane_switch_cooldown <= 0:
-        if held_keys['a'] or held_keys['left']:
-            if player.lane_index > 0:
-                player.switch_lane(player.lane_index - 1)
-                lane_switch_cooldown = 0.3
-        if held_keys['d'] or held_keys['right']:
-            if player.lane_index < len(lanes) - 1:
-                player.switch_lane(player.lane_index + 1)
-                lane_switch_cooldown = 0.3
+    global lane_switch_cooldown, last_eye_direction, eye_command_processed
+    
+    if use_eye_tracking:
+        current_direction = eye_tracker.get_direction()
+        
+        # process a direction change when the cooldown is complete
+        if lane_switch_cooldown <= 0:
+            if current_direction != last_eye_direction:
+                eye_command_processed = False
+                last_eye_direction = current_direction
+            
+            # unprocessed non-center commands
+            if not eye_command_processed and current_direction != "center":
+                if current_direction == "left" and player.lane_index > 0:
+                    player.switch_lane(player.lane_index - 1)
+                    lane_switch_cooldown = 0.3
+                    eye_command_processed = True
+                elif current_direction == "right" and player.lane_index < len(lanes) - 1:
+                    player.switch_lane(player.lane_index + 1)
+                    lane_switch_cooldown = 0.3
+                    eye_command_processed = True
+
+            if current_direction == "center":
+                eye_command_processed = False
+    else:
+        # keyboard controls
+        if lane_switch_cooldown <= 0:
+            if held_keys['a'] or held_keys['left']:
+                if player.lane_index > 0:
+                    player.switch_lane(player.lane_index - 1)
+                    lane_switch_cooldown = 0.3
+            if held_keys['d'] or held_keys['right']:
+                if player.lane_index < len(lanes) - 1:
+                    player.switch_lane(player.lane_index + 1)
+                    lane_switch_cooldown = 0.3
 
 
 def ensure_obstacles_ahead():
@@ -104,9 +155,24 @@ def check_collisions():
 
 
 def update():
-    global score, lane_switch_cooldown
+    global score, lane_switch_cooldown, use_eye_tracking, eye_tracking_available
     if not game_active:
         return
+    
+    # Toggle eye tracking with 'e' key
+    from ursina import Text
+    if held_keys['e']: 
+        if eye_tracking_available:
+            use_eye_tracking = not use_eye_tracking
+            eye_tracking_text = Text(text=f"Eye tracking: {'ON' if use_eye_tracking else 'OFF'}",
+                                    origin=(2.2, 3.4), scale=1.2, parent=camera.ui)
+            destroy(eye_tracking_text, delay=2)
+            time.sleep(0.2)
+        else:
+            eye_tracking_text = Text(text="Eye tracking not available!",
+                                    origin=(1.4, 3.4), scale=1.2, parent=camera.ui)
+            destroy(eye_tracking_text, delay=2)
+            time.sleep(0.2)
 
     current_speed = base_speed * level_speed[level_manager.current_level]
     player.update_position(time.dt, current_speed, ball_radius)
@@ -126,4 +192,10 @@ def update():
                       level_speed[level_manager.current_level], score)
 
 
-app.run()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--eye_tracking', action='store_true', help='Use eye tracking for control')
+    args = parser.parse_args()
+
+    app = init_game(args.eye_tracking)
+    app.run()

@@ -1,6 +1,6 @@
-# EyeBall :video_game:
-Simple game. Will implement different stuff along the way...\
-Goal: to have fun and learn in the process.
+# EyeBall - A Game For Lazy Days :video_game:
+:eyes: Lay back and watch the ball roll where you want it to go. \
+:robot: Compete with an RL agent.
 
 <p align="center">
   <img src="assets/gameplay.png" width="600" alt="EyeBall Gameplay">
@@ -9,21 +9,44 @@ Goal: to have fun and learn in the process.
 </p>
 
 ## Setup
+
+### Prerequisite for eye tracking
+If you are on Windows you need [Microsoft Visual C++ Redistributable 2015-2022](https://aka.ms/vs/17/release/vc_redist.x64.exe) to run mediapipe, else you get DLL load errors.\
+Check your architecture with:
+```bash
+python -c "import platform; print(platform.architecture())"
+```
+
+### Get started
 1. create environment with `conda env create -f environment.yaml`
 2. activate it with `conda activate eye`
-3. run the game with `python src/app.py` and restart with `F5`
+3. run the game with `python src/app.py --eye_tracking` and restart with `F5`. (leave out `--eye_tracking` if you don't want to use camera...)
 
 ## Control
+1. Keyboard controls:
 - Left: `a`
 - Right: `d`
 - Jump: `space`
+
+2. Eye tracking controls
+
+<p align="center">
+  <img src="assets/face.png" width="800" alt="Eye Control">
+  <br>
+  <em>Eye tracking to control the game with your gaze. Look left = move left, look right = move right </em>
+</p>
+
+- Jump: `space`
+
+Toggle between eye tracking and keyboard controls with `e`.
 
 ## Planned Todos (in no particular order)
 <details>
 <summary>Click to expand</summary>
 
-- [ ] Implement eye tracking to control game
+- [x] Implement eye tracking to control game
 - [ ] Improve level generation/more difficulty/more obstacle types etc...
 - [ ] Add RL agent --> train to play the game
+- [ ] Add ability compete with the RL agent (in the same game)
 
 </details>

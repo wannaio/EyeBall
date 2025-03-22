@@ -1,4 +1,4 @@
-from ursina import Entity, color, curve, Texture
+from ursina import Entity, color, curve
 from math import degrees
 
 
