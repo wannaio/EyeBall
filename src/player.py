@@ -3,12 +3,12 @@ from math import degrees
 
 
 class Player(Entity):
-    def __init__(self, lanes, **kwargs):
+    def __init__(self, lanes, color=color.azure, **kwargs):
         super().__init__(
             model='sphere',
-            color=color.azure,
+            color=color,
             scale=0.5,
-            position=(lanes[1], 1, 0),
+            position=(lanes[1], 0, 0),
             collider='sphere',
             texture='white_cube',
             **kwargs
@@ -28,3 +28,18 @@ class Player(Entity):
         self.lane_index = target_index
         self.animate_x(self.lanes[target_index],
                        duration=duration, curve=curve.out_expo)
+
+    def update_y(self, dt, gravity):
+        self.y_velocity += gravity * dt
+        self.y -= self.y_velocity * dt
+        if self.y < 0:
+            self.y = 0
+            self.y_velocity = 0
+
+    def reset(self):
+        """Reset player to starting position"""
+        self.x = self.lanes[1]  # Center lane
+        self.z = 0              # Start position
+        self.y = 0              # Ground level
+        self.y_velocity = 0     # No vertical movement
+        self.lane_index = 1     # Center lane index

@@ -11,9 +11,9 @@ def spawn_obstacle_at(obstacle_z, lanes, current_level, obstacles):
         for lane in lanes:
             obstacle = Entity(
                 model='cube',
-                scale=(1.5, 0.8, 0.5),
+                scale=(1.5, 0.6, 0.5),
                 color=color.orange,
-                position=(lane, 0.5, obstacle_z),
+                position=(lane, 0, obstacle_z),
                 collider='box'
             )
             obstacles.append(obstacle)
@@ -27,9 +27,9 @@ def spawn_obstacle_at(obstacle_z, lanes, current_level, obstacles):
         if random.random() < spawn_probability:
             obstacle = Entity(
                 model='cube',
-                scale=(1.5, 1.3, 0.5),
+                scale=(1.5, 1, 0.5),
                 color=color.black90,
-                position=(lane, 0.5, obstacle_z),
+                position=(lane, 0, obstacle_z),
                 collider='box'
             )
             obstacles.append(obstacle)

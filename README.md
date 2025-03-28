@@ -20,7 +20,14 @@ python -c "import platform; print(platform.architecture())"
 ### Get started
 1. create environment with `conda env create -f environment.yaml`
 2. activate it with `conda activate eye`
-3. run the game with `python src/app.py --eye_tracking` and restart with `F5`. (leave out `--eye_tracking` if you don't want to use camera...)
+3. run the game with `python src/app.py`.
+
+## How to play
+Avoid obstacles by swaping lanes or jumping over them.
+
+- restart with `r` if you hit an obstacle
+- restart with `shift + r` if you want to restart the game during gameplay
+- toggle eye tracker ON/OFF with `e`
 
 ## Control
 1. Keyboard controls:
@@ -29,7 +36,6 @@ python -c "import platform; print(platform.architecture())"
 - Jump: `space`
 
 2. Eye tracking controls
-
 <p align="center">
   <img src="assets/face.png" width="800" alt="Eye Control">
   <br>
@@ -38,7 +44,6 @@ python -c "import platform; print(platform.architecture())"
 
 - Jump: `space`
 
-Toggle between eye tracking and keyboard controls with `e`.
 
 ## Planned Todos (in no particular order)
 <details>

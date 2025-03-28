@@ -3,7 +3,6 @@ from ursina import Entity, Sky, color, camera
 
 class GameEnv:
     def __init__(self):
-        # Create sky
         self.sky = Sky(texture='sky_default')
         
         # floating platform

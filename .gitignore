@@ -1,2 +1,7 @@
 **__pycache__/
 .git
+*logs/
+*checkpoints/
+src/rl/models/eyeball_final_model.zip
+src/rl/models/best_0/
+temp/
