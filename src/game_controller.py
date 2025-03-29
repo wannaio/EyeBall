@@ -16,14 +16,16 @@ class GameController:
         # state
         self.game_active = True
         self.score = 0
+        self.ai_score = 0
         self.obstacles = []
         self.last_obstacle_z = 0
         self.lane_switch_cooldown = 0
         self.jumping = False
+        self.ai_jumping = False
         self.eye_command_processed = True
         self.last_eye_direction = "center"
 
-    def reset_game(self, player):
+    def reset_game(self, player, ai_player):
         for obstacle in self.obstacles[:]:
             destroy(obstacle)
         self.obstacles.clear()
@@ -31,9 +33,12 @@ class GameController:
         self.game_active = True
         self.score = 0
         self.last_obstacle_z = 0
+        self.ai_score = 0
         self.jumping = False
+        self.ai_jumping = False
 
         player.reset()
+        ai_player.reset()
 
     def handle_jumping(self, player, jump_key_pressed):
         is_grounded = player.y <= 0.01
@@ -52,6 +57,22 @@ class GameController:
                 self.jumping = False
         if player.y < 0:
             player.y = 0
+
+    def handle_ai_jumping(self, ai_player, ai_action):
+        if ai_action == 3 and ai_player.y <= 0.01 and not self.ai_jumping:
+            self.ai_jumping = True
+            ai_player.y_velocity = 4
+
+        if self.ai_jumping:
+            ai_player.y += ai_player.y_velocity * time.dt
+            ai_player.y_velocity = apply_gravity(
+                ai_player.y_velocity, self.gravity, time.dt)
+            if ai_player.y <= 0 and ai_player.y_velocity < 0:
+                ai_player.y = 0
+                ai_player.y_velocity = 0
+                self.ai_jumping = False
+        if ai_player.y < 0:
+            ai_player.y = 0
 
     def handle_lane_movement(self, player, eye_tracker, use_eye_tracking, held_keys):
         if self.lane_switch_cooldown > 0:

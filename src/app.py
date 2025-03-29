@@ -5,8 +5,15 @@ from level import LevelManager
 from ui import UIManager
 from game_env import GameEnv
 from game_controller import GameController
+from rl.ai_controller import AIController
 import sys
+from pathlib import Path
 
+
+# Define paths for RL model
+rl_dir = str(Path(__file__).parent.absolute() / "RL")
+model_path = f"{rl_dir}/models/best/best_model"
+stats_path = f"{rl_dir}/models/vec_normalize.pkl"
 
 # Game configuration
 lanes = [-2, 0, 2]
@@ -26,11 +33,18 @@ controls_text_shown = False
 
 
 def check_collisions():
+    global ai_active
     for obstacle in game_controller.obstacles[:]:
         if player.intersects(obstacle).hit:
             game_controller.game_active = False
             game_over_text = Text(text=f"Game Over! Your Score: {int(game_controller.score)}",
                                   origin=(0, 0), scale=1.5, parent=camera.ui)
+
+        if ai_active and ai_player.intersects(obstacle).hit:
+            ai_game_over_text = Text(text=f"AI crashed! AI Score: {int(game_controller.ai_score)}",
+                                     position=(0.3, -0.4), scale=1.5, color=color.red, parent=camera.ui)
+            ai_active = False
+            print("AI crashed!")
 
         # clean up obstacles behind player
         min_z = player.z - 10
@@ -41,13 +55,15 @@ def check_collisions():
 
 def reset_game():
     """Reset the game state to start a new game"""
-    global controls_text_shown
+    global ai_active, controls_text_shown
 
-    game_controller.reset_game(player)
+    game_controller.reset_game(player, ai_player)
+    ai_active = True
 
     for entity in scene.entities:
         if isinstance(entity, Text):
             if ("Game Over" in getattr(entity, 'text', '') or
+                "AI crashed" in getattr(entity, 'text', '') or
                     "Controls:" in getattr(entity, 'text', '')):
                 destroy(entity, delay=2)
 
@@ -57,13 +73,26 @@ def reset_game():
                         color=color.green,
                         parent=camera.ui)
     destroy(restart_text, delay=2)
+    
+    ai_indicator_exists = False
+    for entity in scene.entities:
+        if isinstance(entity, Text) and "AI Agent Running" in getattr(entity, 'text', ''):
+            ai_indicator_exists = True
+            break
+
+    if not ai_indicator_exists:
+        Text(text="AI Agent Running",
+             position=(-0.7, -0.4),
+             scale=1,
+             color=color.red,
+             parent=camera.ui)
 
     controls_text_shown = False
 
 
 def update():
     """Main game loop"""
-    global use_eye_tracking, controls_text_shown
+    global use_eye_tracking, ai_active, controls_text_shown
 
     if held_keys['escape']:
         print("Exiting game...")
@@ -102,6 +131,15 @@ def update():
     current_speed = base_speed * level_speed[level_manager.current_level]
     player.update_position(time.dt, current_speed, ball_radius)
 
+    if ai_active:
+        ai_player.update_position(time.dt, current_speed, ball_radius)
+        game_controller.ai_score += time.dt
+        ai_action = ai_controller.process_action(time.dt, ai_player, game_controller.obstacles,
+                                                 lanes, base_speed, level_speed, level_manager.current_level)
+        game_controller.handle_ai_jumping(ai_player, ai_action)
+    elif not ai_active and ai_player.z < player.z:
+        ai_player.update_position(time.dt, current_speed, ball_radius)
+
     camera.position = (player.x, player.y + 5, player.z - 10)
 
     # player movements
@@ -118,7 +156,7 @@ def update():
     # UI
     ui_manager.update(level_manager.current_level,
                       level_speed[level_manager.current_level],
-                      game_controller.score)
+                      game_controller.score, game_controller.ai_score)
 
 app = Ursina(
     title="EyeBall Game",
@@ -139,7 +177,16 @@ except Exception as e:
 # Init game objects
 game_env = GameEnv()
 player = Player(lanes, color=color.white)
+ai_player = Player(lanes, color=color.red)
 game_controller = GameController(lanes, base_speed, gravity, ball_radius, obstacle_min_spacing)
+ai_controller = AIController(rl_dir, model_path, stats_path)
+ai_active = True
+
+ai_text = Text(text="AI Agent Running",
+               position=(-0.7, -0.4),
+               scale=1,
+               color=color.red,
+               parent=camera.ui)
 
 camera.position = (0, 5, -10)
 camera.rotation_x = 20

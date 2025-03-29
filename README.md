@@ -29,7 +29,7 @@ Avoid obstacles by swaping lanes or jumping over them.
 - restart with `shift + r` if you want to restart the game during gameplay
 - toggle eye tracker ON/OFF with `e`
 
-## Control
+### Control
 1. Keyboard controls:
 - Left: `a`
 - Right: `d`
@@ -51,7 +51,7 @@ Avoid obstacles by swaping lanes or jumping over them.
 
 - [x] Implement eye tracking to control game
 - [ ] Improve level generation/more difficulty/more obstacle types etc...
-- [ ] Add RL agent --> train to play the game
-- [ ] Add ability compete with the RL agent (in the same game)
+- [x] Add RL agent --> train to play the game
+- [x] Add ability compete with the RL agent (in the same game)
 
 </details>
