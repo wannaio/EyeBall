@@ -6,7 +6,13 @@ dependencies:
   - python=3.11
   - pip=23.1.2
   - numpy=1.26.4
+  - matplotlib=3.10.1
+  - pandas=2.2.3
   - pip:
     - ursina==7.0.0
+    - stable-baselines3==2.5.0
+    - gymnasium==1.0.0
+    - gym==0.26.2
+    - shimmy==2.0.0    
     - mediapipe==0.10.21
     - opencv-python==4.11.0.86
